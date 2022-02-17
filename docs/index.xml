@@ -255,7 +255,7 @@
 &lt;p&gt;PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based Kubernetes cluster for learning and testing.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;If you use Helm to install porter, ensure that the Helm version is Helm 3.&lt;/p&gt;
+&lt;p&gt;If you use Helm to install PorterLB, ensure that the Helm version is Helm 3.&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;install-porterlb-using-kubectl&#34;&gt;Install PorterLB Using kubectl&lt;/h2&gt;
@@ -1256,7 +1256,7 @@ protocol bgp neighbor1 {
 &lt;p&gt;You need to &lt;a href=&#34;https://rancher.com/docs/k3s/latest/en/installation/&#34;&gt;prepare a K3s Kubernetes cluster&lt;/a&gt;, and ensure that the Kubernetes version is 1.15 or later. PorterLB requires CustomResourceDefinition (CRD) v1, which is only supported by Kubernetes 1.15 or later. PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based K3s Kubernetes cluster for learning and testing.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;If you use Helm to install porter, ensure that the Helm version is Helm 3.&lt;/p&gt;
+&lt;p&gt;If you use Helm to install PorterLB, ensure that the Helm version is Helm 3.&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;install-porterlb-using-kubectl&#34;&gt;Install PorterLB Using kubectl&lt;/h2&gt;

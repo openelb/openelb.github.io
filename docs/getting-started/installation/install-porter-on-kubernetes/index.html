@@ -26,12 +26,12 @@ NOTE
  In a Kubernetes cluster, you only need to install PorterLB once. After the installation is complete, a porter-manager Deployment that contains a porter-manager Pod is installed in the cluster. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster. After the installation is complete, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes to ensure high availability." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="/docs/getting-started/installation/install-porter-on-kubernetes/" />
-<meta property="article:modified_time" content="2021-03-31T10:27:04+08:00" /><meta property="og:site_name" content="OpenELB" />
+<meta property="article:modified_time" content="2021-12-08T13:15:46+08:00" /><meta property="og:site_name" content="OpenELB" />
 <meta itemprop="name" content="Install PorterLB on Kubernetes">
 <meta itemprop="description" content="This document describes how to use kubectl and Helm to install and delete PorterLB in a Kubernetes cluster.
 NOTE
  In a Kubernetes cluster, you only need to install PorterLB once. After the installation is complete, a porter-manager Deployment that contains a porter-manager Pod is installed in the cluster. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster. After the installation is complete, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes to ensure high availability.">
-<meta itemprop="dateModified" content="2021-03-31T10:27:04&#43;08:00" />
+<meta itemprop="dateModified" content="2021-12-08T13:15:46&#43;08:00" />
 <meta itemprop="wordCount" content="409">
 
 
@@ -644,7 +644,7 @@ NOTE
 <p>PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based Kubernetes cluster for learning and testing.</p>
 </li>
 <li>
-<p>If you use Helm to install porter, ensure that the Helm version is Helm 3.</p>
+<p>If you use Helm to install PorterLB, ensure that the Helm version is Helm 3.</p>
 </li>
 </ul>
 <h2 id="install-porterlb-using-kubectl">Install PorterLB Using kubectl</h2>
@@ -770,7 +770,7 @@ helm install porter test/porter
 		<br />
 	
 	
-	<div class="text-muted mt-5 pt-3 border-top">Last modified March 31, 2021: <a  href="https://github.com/kubesphere/kubesphere.github.io/commit/6b5fcb1b7e55642ccc25c7c0a5e16f6f54b9c622">Relocated files to adapt to localization and changed links. (6b5fcb1)</a>
+	<div class="text-muted mt-5 pt-3 border-top">Last modified December 8, 2021: <a  href="https://github.com/kubesphere/kubesphere.github.io/commit/994191cf640807ced1463a3e1e4f420ad13fde43">Fix minor issues in docs. (994191c)</a>
 </div>
 </div>
 
@@ -823,7 +823,7 @@ helm install porter test/porter
         
       </div>
       <div class="col-12 col-sm-4 text-center py-2 order-sm-2">
-        <small class="text-white">&copy; 2021 KubeSphere All Rights Reserved</small>
+        <small class="text-white">&copy; 2022 KubeSphere All Rights Reserved</small>
         
 	
 		
