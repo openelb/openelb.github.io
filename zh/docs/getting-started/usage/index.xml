@@ -1,0 +1,519 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>OpenELB – Usage</title><link>/zh/docs/getting-started/usage/</link><description>Recent content in Usage on OpenELB</description><generator>Hugo -- gohugo.io</generator><atom:link href="/zh/docs/getting-started/usage/index.xml" rel="self" type="application/rss+xml"/><item><title>Docs: Use PorterLB in BGP Mode</title><link>/zh/docs/getting-started/usage/use-porter-in-bgp-mode/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/getting-started/usage/use-porter-in-bgp-mode/</guid><description>
+&lt;p>This document demonstrates how to use PorterLB in BGP mode to expose a Service backed by two Pods. The BgpConf, BgpPeer, Eip, Deployment and Service described in this document are examples only and you need to customize the commands and YAML configurations based on your requirements.&lt;/p>
+&lt;p>Instead of using a real router, this document uses a Linux server with &lt;a href="https://bird.network.cz/">BIRD&lt;/a> to simulate a router so that users without a real router can also use PorterLB in BGP mode for tests.&lt;/p>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>You need to &lt;a href="/docs/getting-started/installation/">prepare a Kubernetes cluster where PorterLB has been installed&lt;/a>.&lt;/li>
+&lt;li>You need to prepare a Linux server that communicates with the Kubernetes cluster properly. BIRD will be installed on the server to simulate a BGP router.&lt;/li>
+&lt;li>If you use a real router instead of BIRD, the router must support BGP and Equal-Cost Multi-Path (ECMP) routing. In addition, the router must also support receiving multiple equivalent routes from the same neighbor.&lt;/li>
+&lt;/ul>
+&lt;p>This document uses the following devices as an example:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Device Name&lt;/th>
+&lt;th>IP Address&lt;/th>
+&lt;th>Description&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>master1&lt;/td>
+&lt;td>192.168.0.2&lt;/td>
+&lt;td>Kubernetes cluster master, where PorterLB is installed.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>worker-p001&lt;/td>
+&lt;td>192.168.0.3&lt;/td>
+&lt;td>Kubernetes cluster worker 1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>worker-p002&lt;/td>
+&lt;td>192.168.0.4&lt;/td>
+&lt;td>Kubernetes cluster worker 2&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>i-f3fozos0&lt;/td>
+&lt;td>192.168.0.5&lt;/td>
+&lt;td>BIRD machine, where BIRD will be installed to simulate a BGP router.&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="step-1-install-and-configure-bird">Step 1: Install and Configure BIRD&lt;/h2>
+&lt;p>If you use a real router, you can skip this step and perform configuration on the router instead.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the BIRD machine and run the following commands to install BIRD:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">sudo add-apt-repository ppa:cz.nic-labs/bird
+sudo apt-get update
+sudo apt-get install bird
+sudo systemctl &lt;span style="color:#204a87">enable&lt;/span> bird
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>BIRD 1.5 does not support ECMP. To use all features of PorterLB, you are advised to install BIRD 1.6 or later.&lt;/li>
+&lt;li>The preceding commands apply only to Debian-based OSs such as Debian and Ubuntu. On Red Hat-based OSs such as RHEL and CentOS, use &lt;a href="https://access.redhat.com/solutions/9934">yum&lt;/a> instead.&lt;/li>
+&lt;li>You can also install BIRD according to the &lt;a href="https://bird.network.cz/">official BIRD documentation&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to edit the BIRD configuration file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi /etc/bird/bird.conf
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Configure the BIRD configuration file as follows:&lt;/p>
+&lt;pre>&lt;code class="language-conf" data-lang="conf">router id 192.168.0.5;
+protocol kernel {
+scan time 60;
+import none;
+export all;
+merge paths on;
+}
+protocol bgp neighbor1 {
+local as 50001;
+neighbor 192.168.0.2 port 17900 as 50000;
+source address 192.168.0.5;
+import all;
+export all;
+enable route refresh off;
+add paths on;
+}
+&lt;/code>&lt;/pre>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>
+&lt;p>For test usage, you only need to customize the following fields in the preceding configuration:&lt;/p>
+&lt;p>&lt;code>router id&lt;/code>: Router ID of the BIRD machine, which is usually set to the IP address of the BIRD machine.&lt;/p>
+&lt;p>&lt;code>protocol bgp neighbor1&lt;/code>:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>local as&lt;/code>: ASN of the BIRD machine, which must be different from the ASN of the Kubernetes cluster.&lt;/li>
+&lt;li>&lt;code>neighbor&lt;/code>: Master node IP address, BGP port number, and ASN of the Kubernetes cluster. Use port &lt;code>17900&lt;/code> instead of the default BGP port &lt;code>179&lt;/code> to avoid conflicts with other BGP components in the system.&lt;/li>
+&lt;li>&lt;code>source address&lt;/code>: IP address of the BIRD machine.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>If multiple nodes in the Kubernetes are used as BGP neighbors, you need to configure multiple BGP neighbors in the BIRD configuration file.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>For details about the BIRD configuration file, see the &lt;a href="https://bird.network.cz/">official BIRD documentation&lt;/a>.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to restart BIRD:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">sudo systemctl restart bird
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check whether the status of BIRD is active:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">sudo systemctl status bird
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/bird-status.jpg" alt="bird-status">&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;p>If the status of BIRD is not active, you can run the following command to check the error logs:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">journalctl -f -u bird
+&lt;/code>&lt;/pre>&lt;/div>&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-2-create-a-bgpconf-object">Step 2: Create a BgpConf Object&lt;/h2>
+&lt;p>The BgpConf object is used to configure the local (Kubernetes cluster) BGP properties on PorterLB.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the BgpConf object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-bgp-conf.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">network.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">BgpConf&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">default&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">as&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">50000&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">listenPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">17900&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">routerId&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">192.168.0.2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>For details about the fields in the BgpConf YAML configuration, see &lt;a href="./configure-porter-in-bgp-mode.md/#configure-local-bgp-properties-using-bgpconf">Configure Local BGP Properties Using BgpConf&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the BgpConf object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-bgp-conf.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-3-create-a-bgppeer-object">Step 3: Create a BgpPeer Object&lt;/h2>
+&lt;p>The BgpPeer object is used to configure the peer (BIRD machine) BGP properties on PorterLB.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the BgpPeer object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-bgp-peer.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">network.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">BgpPeer&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp-peer&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">conf&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">peerAs&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">50001&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">neighborAddress&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">192.168.0.5&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>For details about the fields in the BgpPeer YAML configuration, see &lt;a href="./configure-porter-in-bgp-mode.md/#configure-peer-bgp-properties-using-bgppeer">Configure Peer BGP Properties Using BgpPeer&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the BgpPeer object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-bgp-peer.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-4-create-an-eip-object">Step 4: Create an Eip Object&lt;/h2>
+&lt;p>The Eip object functions as an IP address pool for PorterLB.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Eip object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-bgp-eip.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">network.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">address&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">172.22.0.2-172.22.0.10&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>For details about the fields in the Eip YAML configuration, see &lt;a href="https://github.com/kubesphere/porter/blob/master/doc/configure-ip-address-pools-using-eip.md">Configure IP Address Pools Using Eip&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Eip object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-bgp-eip.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-5-create-a-deployment">Step 5: Create a Deployment&lt;/h2>
+&lt;p>The following creates a Deployment of two Pods using the luksa/kubia image. Each Pod returns its own Pod name to external requests.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-bgp.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">apps/v1&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Deployment&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">replicas&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">selector&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">matchLabels&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">template&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">labels&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">containers&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">image&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">luksa/kubia&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">kubia&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">ports&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">containerPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">8080&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-bgp.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-6-create-a-service">Step 6: Create a Service&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-bgp-svc.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Service&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">v1&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp-svc&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">annotations&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">lb.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">protocol.porter.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">bgp&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">eip.porter.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">selector&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-bgp&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">type&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">LoadBalancer&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">ports&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">http&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">port&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">80&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">targetPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">8080&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">externalTrafficPolicy&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Cluster&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>You must set &lt;code>spec:type&lt;/code> to &lt;code>LoadBalancer&lt;/code>.&lt;/li>
+&lt;li>The &lt;code>lb.kubesphere.io/v1alpha1: porter&lt;/code> annotation specifies that the Service uses PorterLB.&lt;/li>
+&lt;li>The &lt;code>protocol.porter.kubesphere.io/v1alpha1: bgp&lt;/code> annotation specifies that PorterLB is used in BGP mode.&lt;/li>
+&lt;li>The &lt;code>eip.porter.kubesphere.io/v1alpha2: porter-bgp-eip&lt;/code> annotation specifies the Eip object used by PorterLB. If this annotation is not configured, PorterLB automatically uses the first available Eip object that matches the protocol. You can also delete this annotation and add the &lt;code>spec:loadBalancerIP&lt;/code> field (for example, &lt;code>spec:loadBalancerIP: 172.22.0.2&lt;/code>) to assign a specific IP address to the Service.&lt;/li>
+&lt;li>In the BGP mode, you can set &lt;code>spec:loadBalancerIP&lt;/code> of multiple Services to the same value for IP address sharing (the Services are distinguished by different Service ports). In this case, you must set &lt;code>spec:ports:port&lt;/code> to different values and &lt;code>spec:externalTrafficPolicy&lt;/code> to &lt;code>Cluster&lt;/code> for the Services.&lt;/li>
+&lt;li>If &lt;code>spec:externalTrafficPolicy&lt;/code> is set to &lt;code>Cluster&lt;/code> (default value), PorterLB uses all Kubernetes cluster nodes as the next hops destined for the Service.&lt;/li>
+&lt;li>If &lt;code>spec:externalTrafficPolicy&lt;/code> is set to &lt;code>Local&lt;/code>, PorterLB uses only Kubernetes cluster nodes that contain Pods as the next hops destined for the Service.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-bgp-svc.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-7-verify-porterlb-in-bgp-mode">Step 7: Verify PorterLB in BGP Mode&lt;/h2>
+&lt;p>The following verifies whether PorterLB functions properly.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>In the Kubernetes cluster, run the following command to obtain the external IP address of the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get svc
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/service-ip.jpg" alt="service-ip">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the Kubernetes cluster, run the following command to obtain the IP addresses of the cluster nodes:&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/node-ips.jpg" alt="node-ips">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>On the BIRD machine, run the following command to check the routing table. If equivalent routes using the Kubernetes cluster nodes as next hops destined for the Service are displayed, PorterLB functions properly.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">ip route
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>If &lt;code>spec:externalTrafficPolicy&lt;/code> in the &lt;a href="#step-6-create-a-service">Service YAML configuration&lt;/a> is set to &lt;code>Cluster&lt;/code>, all Kubernetes cluster nodes are used as the next hops.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/bgp-routes-cluster.jpg" alt="bgp-routes-cluster">&lt;/p>
+&lt;p>If &lt;code>spec:externalTrafficPolicy&lt;/code> in the &lt;a href="#step-6-create-a-service">Service YAML configuration&lt;/a> is set to &lt;code>Local&lt;/code>, only Kubernetes cluster nodes that contain Pods are used as the next hops.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/bgp-routes-local.jpg" alt="bgp-routes-local">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>On the BIRD machine, run the following command to access the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">curl 172.22.0.2
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-bgp-mode/access-service.jpg" alt="access-service">&lt;/p>
+&lt;/li>
+&lt;/ol></description></item><item><title>Docs: Use PorterLB in Layer 2 Mode</title><link>/zh/docs/getting-started/usage/use-porter-in-layer-2-mode/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/getting-started/usage/use-porter-in-layer-2-mode/</guid><description>
+&lt;p>This document demonstrates how to use PorterLB in Layer 2 mode to expose a Service backed by two Pods. The Eip, Deployment and Service described in this document are examples only and you need to customize the commands and YAML configurations based on your requirements.&lt;/p>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>You need to &lt;a href="/docs/getting-started/installation/">prepare a Kubernetes cluster where PorterLB has been installed&lt;/a>. All Kubernetes cluster nodes must be on the same Layer 2 network (under the same router).&lt;/li>
+&lt;li>You need to prepare a client machine, which is used to verify whether PorterLB functions properly in Layer 2 mode. The client machine needs to be on the same network as the Kubernetes cluster nodes.&lt;/li>
+&lt;/ul>
+&lt;p>This document uses the following devices as an example:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Device Name&lt;/th>
+&lt;th>IP Address&lt;/th>
+&lt;th>MAC Address&lt;/th>
+&lt;th>Description&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>master1&lt;/td>
+&lt;td>192.168.0.2&lt;/td>
+&lt;td>52:54:22:a3:9a:d9&lt;/td>
+&lt;td>Kubernetes cluster master&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>worker-p001&lt;/td>
+&lt;td>192.168.0.3&lt;/td>
+&lt;td>52:54:22:3a:e6:6e&lt;/td>
+&lt;td>Kubernetes cluster worker 1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>worker-p002&lt;/td>
+&lt;td>192.168.0.4&lt;/td>
+&lt;td>52:54:22:37:6c:7b&lt;/td>
+&lt;td>Kubernetes cluster worker 2&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>i-f3fozos0&lt;/td>
+&lt;td>192.168.0.5&lt;/td>
+&lt;td>52:54:22:fa:b9:3b&lt;/td>
+&lt;td>Client machine&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="step-1-enable-strictarp-for-kube-proxy">Step 1: Enable strictARP for kube-proxy&lt;/h2>
+&lt;p>In Layer 2 mode, you need to enable strictARP for kube-proxy so that all NICs in the Kubernetes cluster stop answering ARP requests from other NICs and PorterLB handles ARP requests instead.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the Kubernetes cluster and run the following command to edit the kube-proxy ConfigMap:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl edit configmap kube-proxy -n kube-system
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>In the kube-proxy ConfigMap YAML configuration, set &lt;code>data.config.conf.ipvs.strictARP&lt;/code> to &lt;code>true&lt;/code>.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">ipvs&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">strictARP&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">true&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to restart kube-proxy:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl rollout restart daemonset kube-proxy -n kube-system
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-2-specify-the-nic-used-for-porterlb">Step 2: Specify the NIC Used for PorterLB&lt;/h2>
+&lt;p>If the node where PorterLB is installed has multiple NICs, you need to specify the NIC used for PorterLB in Layer 2 mode. You can skip this step if the node has only one NIC.&lt;/p>
+&lt;p>In this example, the master1 node where PorterLB is installed has two NICs (eth0 192.168.0.2 and eth1 192.168.1.2), and eth0 192.168.0.2 will be used for PorterLB.&lt;/p>
+&lt;p>Run the following command to annotate master1 to specify the NIC:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl annotate nodes master1 layer2.porter.kubesphere.io/v1alpha1&lt;span style="color:#ce5c00;font-weight:bold">=&lt;/span>&lt;span style="color:#4e9a06">&amp;#34;192.168.0.2&amp;#34;&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="step-3-create-an-eip-object">Step 3: Create an Eip Object&lt;/h2>
+&lt;p>The Eip object functions as an IP address pool for PorterLB.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Eip object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-layer2-eip.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">network.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">address&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">192.168.0.91-192.168.0.100&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">interface&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">eth0&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">protocol&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>
+&lt;p>The IP addresses specified in &lt;code>spec:address&lt;/code> must be on the same network segment as the Kubernetes cluster nodes.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>For details about the fields in the Eip YAML configuration, see &lt;a href="/docs/getting-started/configuration/configure-ip-address-pools-using-eip/">Configure IP Address Pools Using Eip&lt;/a>.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Eip object:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-layer2-eip.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-4-create-a-deployment">Step 4: Create a Deployment&lt;/h2>
+&lt;p>The following creates a Deployment of two Pods using the luksa/kubia image. Each Pod returns its own Pod name to external requests.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-layer2.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">apps/v1&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Deployment&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">replicas&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">selector&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">matchLabels&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">template&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">labels&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">containers&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">image&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">luksa/kubia&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">kubia&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">ports&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">containerPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">8080&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-layer2.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-5-create-a-service">Step 5: Create a Service&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Run the following command to create a YAML file for the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">vi porter-layer2-svc.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Service&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">v1&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2-svc&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">annotations&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">lb.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">protocol.porter.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">eip.porter.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">selector&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">app&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">type&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">LoadBalancer&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">ports&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">http&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">port&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">80&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">targetPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">8080&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">externalTrafficPolicy&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Cluster&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>You must set &lt;code>spec:type&lt;/code> to &lt;code>LoadBalancer&lt;/code>.&lt;/li>
+&lt;li>The &lt;code>lb.kubesphere.io/v1alpha1: porter&lt;/code> annotation specifies that the Service uses PorterLB.&lt;/li>
+&lt;li>The &lt;code>protocol.porter.kubesphere.io/v1alpha1: layer2&lt;/code> annotation specifies that PorterLB is used in Layer 2 mode.&lt;/li>
+&lt;li>The &lt;code>eip.porter.kubesphere.io/v1alpha2: porter-layer2-eip&lt;/code> annotation specifies the Eip object used by PorterLB. If this annotation is not configured, PorterLB automatically uses the first available Eip object that matches the protocol. You can also delete this annotation and add the &lt;code>spec:loadBalancerIP&lt;/code> field (for example, &lt;code>spec:loadBalancerIP: 192.168.0.91&lt;/code>) to assign a specific IP address to the Service.&lt;/li>
+&lt;li>If &lt;code>spec:externalTrafficPolicy&lt;/code> is set to &lt;code>Cluster&lt;/code> (default value), PorterLB randomly selects a node from all Kubernetes cluster nodes to handle Service requests. Pods on other nodes can also be reached over kube-proxy.&lt;/li>
+&lt;li>If &lt;code>spec:externalTrafficPolicy&lt;/code> is set to &lt;code>Local&lt;/code>, PorterLB randomly selects a node that contains a Pod in the Kubernetes cluster to handle Service requests. Only Pods on the selected node can be reached.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to create the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f porter-layer2-svc.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h2 id="step-6-verify-porterlb-in-layer-2-mode">Step 6: Verify PorterLB in Layer 2 Mode&lt;/h2>
+&lt;p>The following verifies whether PorterLB functions properly.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>In the Kubernetes cluster, run the following command to obtain the external IP address of the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get svc porter-layer2-svc
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/service-ip.jpg" alt="service-ip">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the Kubernetes cluster, run the following command to obtain the IP addresses of the cluster nodes:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get nodes -o wide
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/node-ips.jpg" alt="node-ips">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the Kubernetes cluster, run the following command to check the nodes of the Pods:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get po
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/pod-nodes.jpg" alt="pod-nodes">&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>In this example, the Pods are automatically assigned to different nodes. You can manually &lt;a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/">assign Pods to different nodes&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>On the client machine, run the following commands to ping the Service IP address and check the IP neighbors:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">ping 192.168.0.91
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">ip neigh
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/ip-neigh.jpg" alt="ip-neigh">&lt;/p>
+&lt;p>In the output of the &lt;code>ip neigh&lt;/code> command, the MAC address of the Service IP address 192.168.0.91 is the same as that of worker-p001 192.168.0.3. Therefore, PorterLB has mapped the Service IP address to the MAC address of worker-p001.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>On the client machine, run the following command to access the Service:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">curl 192.168.0.91
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>If &lt;code>spec:externalTrafficPolicy&lt;/code> in the &lt;a href="#step-5-create-a-service">Service YAML configuration&lt;/a> is set to &lt;code>Cluster&lt;/code>, both Pods can be reached.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/service-cluster.jpg" alt="service-cluster">&lt;/p>
+&lt;p>If &lt;code>spec:externalTrafficPolicy&lt;/code> in the &lt;a href="#step-5-create-a-service">Service YAML configuration&lt;/a> is set to &lt;code>Local&lt;/code>, only the Pod on the node selected by PorterLB can be reached.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/usage/use-porter-in-layer-2-mode/service-local.jpg" alt="service-local">&lt;/p>
+&lt;/li>
+&lt;/ol></description></item></channel></rss>

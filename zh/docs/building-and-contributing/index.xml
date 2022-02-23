@@ -1,0 +1,71 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>OpenELB – Building and Contributing</title><link>/zh/docs/building-and-contributing/</link><description>Recent content in Building and Contributing on OpenELB</description><generator>Hugo -- gohugo.io</generator><atom:link href="/zh/docs/building-and-contributing/index.xml" rel="self" type="application/rss+xml"/><item><title>Docs: Build the PorterLB Project</title><link>/zh/docs/building-and-contributing/build-the-porter-project/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/building-and-contributing/build-the-porter-project/</guid><description>
+&lt;p>This document describes how to build the PorterLB project for testing.&lt;/p>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>You need to prepare a Linux environment.&lt;/li>
+&lt;li>You need to install &lt;a href="https://github.com/kubesphere/porter/blob/master/doc/how-to-build.md">Go 1.12 or later&lt;/a>.&lt;/li>
+&lt;li>You need to install &lt;a href="https://www.docker.com/get-started">Docker&lt;/a>.&lt;/li>
+&lt;li>You need to install &lt;a href="https://www.docker.com/blog/getting-started-with-docker-for-arm-on-linux/">Docker Buildx&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;h2 id="procedure">Procedure&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Visit &lt;a href="https://github.com/kubesphere/porter">https://github.com/kubesphere/porter&lt;/a> and click &lt;strong>Fork&lt;/strong> to fork the PorterLB repository to your own GitHub account.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Log in to your environment, and run the following commands to clone the PorterLB repository and go to the &lt;code>porter&lt;/code> directory:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">git clone &amp;lt;Address of your own PorterLB repository&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#204a87">cd&lt;/span> porter
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to install Kustomize and Kubebuilder:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">./hack/install_tools.sh
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to install controller-gen:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to configure the environment variable for controller-gen:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#204a87">export&lt;/span> &lt;span style="color:#000">PATH&lt;/span>&lt;span style="color:#ce5c00;font-weight:bold">=&lt;/span>/root/go/bin/:&lt;span style="color:#000">$PATH&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>You need to change &lt;code>/root/go/bin/&lt;/code> to the actual path of controller-gen.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to generate CRDs and webhooks:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">make generate
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Customize the values of &lt;code>IMG_MANAGER&lt;/code> and &lt;code>IMG_AGENT&lt;/code> in &lt;code>Makefile&lt;/code> and run the following command to generate a YAML release file in the &lt;code>deploy&lt;/code> directory:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">make release
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>
+&lt;p>&lt;code>IMG_MANAGER&lt;/code> specifies the repository and tag of the porter-manager image.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>IMG_AGENT&lt;/code> specifies the repository and tag of the porter-agent image.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Currently, PorterLB uses only the porter-manager image. The porter-agent image will be used in future versions.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to deploy PorterLB as a plugin:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f deploy/release.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol></description></item><item><title>Docs: Contribute to the PorterLB Project</title><link>/zh/docs/building-and-contributing/contribute-to-the-porter-project/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/building-and-contributing/contribute-to-the-porter-project/</guid><description>
+&lt;p>PorterLB is an open-source project and a sub-project of &lt;a href="https://github.com/kubesphere">KubeSphere&lt;/a>. Contributions in all forms are always welcome!&lt;/p>
+&lt;h2 id="new-feature-proposals">New Feature Proposals&lt;/h2>
+&lt;p>If you have any ideas or suggestions, please send &lt;a href="https://github.com/kubesphere/community/blob/master/contribution/design-proposal-template.md">design proposals&lt;/a> to the &lt;a href="https://github.com/kubesphere/kubesphere/issues">GitHub PorterLB Repository Issues&lt;/a>.&lt;/p>
+&lt;h2 id="code-contributions">Code Contributions&lt;/h2>
+&lt;p>Obtain the &lt;a href="https://github.com/kubesphere/community/tree/master/developer-guide">developer guides&lt;/a> at the KubeSphere Community, &lt;a href="/docs/building-and-contributing/build-the-porter-project">build the PorterLB project&lt;/a> locally for testing, and send pull requests to the &lt;a href="https://github.com/kubesphere/porter">GitHub PorterLB Repository&lt;/a>.&lt;/p>
+&lt;h2 id="document-contributions">Document Contributions&lt;/h2>
+&lt;p>Both original documents and localization works are welcome!&lt;/p>
+&lt;p>Obtain the &lt;a href="https://github.com/kubesphere/website/blob/master/KubeSphere%20Documentation%20Style%20Guide.md">KubeSphere Documentation Style Guide&lt;/a> and &lt;a href="https://github.com/kubesphere/website/blob/master/localization_style_guides/KubeSphere%20Localization%20Style%20Guide%20(for%20Simplified%20Chinese).md">KubeSphere Localization Style Guide&lt;/a> and send pull requests to the &lt;a href="https://github.com/kubesphere/porter-website">GitHub PorterLB Website Repository&lt;/a>. All documents of PorterLB are located in the &lt;a href="https://github.com/kubesphere/porter-website/tree/master/content">content&lt;/a> directory.&lt;/p></description></item></channel></rss>

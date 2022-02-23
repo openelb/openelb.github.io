@@ -1,0 +1,176 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>OpenELB – OpenELB</title><link>/</link><description>Recent content on OpenELB</description><generator>Hugo -- gohugo.io</generator><atom:link href="/index.xml" rel="self" type="application/rss+xml"/><item><title>Blog: PorterLB: High Availability Mechanisms in Layer 2 Mode</title><link>/blog/2021/03/30/porterlb-high-availability-mechanisms-in-layer-2-mode/</link><pubDate>Tue, 30 Mar 2021 00:00:00 +0000</pubDate><guid>/blog/2021/03/30/porterlb-high-availability-mechanisms-in-layer-2-mode/</guid><description>
+&lt;p>PorterLB makes it possible for users to expose Services in bare-metal Kubernetes environments. Currently, PorterLB supports the BGP mode and the Layer 2 mode, which use BGP and ARP/NDP respectively to expose Services.&lt;/p>
+&lt;p>Generally, the BGP mode is recommended because it allows you to build a high availability system free of failover interruptions and bandwidth bottlenecks. However, BGP may be unavailable in certain systems because of security requirements or because the router does not support BGP. In this case, you can use PorterLB in Layer 2 mode to achieve similar functionality.&lt;/p>
+&lt;p>Though the Layer 2 mode does not provide the same high availability as the BGP mode, it does implement certain mechanisms to ensure that PorterLB can still function as long as the Kubernetes cluster is not entirely down.&lt;/p>
+&lt;p>In this article, I am going to discuss the high availability mechanisms of PorterLB in Layer 2 mode. The following scenarios will be examined:&lt;/p>
+&lt;ul>
+&lt;li>Scenario 1: Only one PorterLB replica is deployed and the node selected by PorterLB is down.&lt;/li>
+&lt;li>Scenario 2: Only one PorterLB replica is deployed and the node that hosts PorterLB is down.&lt;/li>
+&lt;li>Scenario 3: Multiple PorterLB replicas are deployed and one of the nodes that contain PorterLB replicas is down.&lt;/li>
+&lt;/ul>
+&lt;h2 id="scenario-1-the-next-hop-is-down">Scenario 1: The Next Hop Is Down&lt;/h2>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-1-1.png" width="800px">
+&lt;p>In the Kubernetest cluster, only one PorterLB replica (porter-manager Pod) is deployed on node 3 and an application Pod is deployed on node 2. The application Pod is exposed by using a Service (192.168.0.91). PorterLB maps the IP address of the Service to the MAC address of node 2.&lt;/p>
+&lt;p>If the node (node 2 in this example) selected by PorterLB is down, PorterLB automatically maps the Service IP address to the MAC address of another node to rebuild connection to the Service.&lt;/p>
+&lt;p>Therefore, the network topology after node 2 is down probably looks like the following:&lt;/p>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-1-2.png" width="800px">
+&lt;p>One thing you should be aware of is that although PorterLB automatically rebuilds the connection to the Service, there is a short period of failover interruption, which is one of the reasons why the BGP mode better suits scenarios where availability is vital.&lt;/p>
+&lt;h2 id="scenario-2-the-only-porterlb-node-is-down">Scenario 2: The Only PorterLB Node Is Down&lt;/h2>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-2-1.png" width="800px">
+&lt;p>So what if the node that hosts the porter-manager Pod is down?&lt;/p>
+&lt;p>Well, the porter-manager Pod is deployed under a ReplicaSet in a Deployment. Therefore, if the node that hosts the porter-manager Pod is down, the Kubernetes system automatically re-creates the porter-manager Pod on another node. The network topology changes to the following:&lt;/p>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-2-2.png" width="800px">
+&lt;p>Though existing Services that use PorterLB are not affected, the functionality of PorterLB is unavailable during the re-creation, which is why you are advised to deploy multiple PorterLB replicas (porter-manager Pods) in the cluster.&lt;/p>
+&lt;h2 id="scenario-3-one-of-multiple-porterlb-nodes-is-down">Scenario 3: One of Multiple PorterLB Nodes Is Down&lt;/h2>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-3-1.png" width="800px">
+&lt;p>When multiple PorterLB replicas (porter-manager Pods) are deployed, PorterLB uses the leader election mechanism to ensure that only one replica (the leader) communicates with the router. If the node that hosts the leader is down, another PorterLB replica automatically takes over the service after a leader re-election. The network topology changes to the following:&lt;/p>
+&lt;img src="/images/blog/porterlb-high-availability-mechanisms-in-layer-2-mode/scenario-3-2.png" width="800px">
+&lt;p>Although the functionality of PorterLB is still unavailable during the leader re-election, the downtime is much shorter than that in scenario 2. Therefore, if you need to use the Layer 2 mode in a production environment, it is highly recommended that you deploy multiple PorterLB replicas to improve the availability.&lt;/p></description></item><item><title>Blog: KubeSphere+PorterLB: Implement Grayscale Release on Bare-Metal Kubernetes</title><link>/blog/2021/03/12/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/</link><pubDate>Fri, 12 Mar 2021 00:00:00 +0000</pubDate><guid>/blog/2021/03/12/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/</guid><description>
+&lt;p>&lt;a href="https://porterlb.io">PorterLB&lt;/a> is a load balancer implementation designed for bare-metal Kubernetes clusters. As a sub-project of &lt;a href="https://kubesphere.io">KubeSphere&lt;/a>, PorterLB fits well into the KubeSphere ecosystem. You can seamlessly integrate PorterLB as a plugin with KubeSphere to utilize the abundant features of the KubeSphere ecosystem.&lt;/p>
+&lt;p>During new feature release, the KubeSphere grayscale release feature allows users to freely distribute traffic among a stable version and a beta version of an application to both ensure service continuity and test the beta version before formally rolling it out.&lt;/p>
+&lt;p>In this article, I am going to introduce how to use KubeSphere and PorterLB to implement grayscale release for an application in a bare-metal Kubernetes cluster. To make you quickly understand how it works, I am going to directly use demonstration settings without digging too much into the details. You can obtain detailed guidance from the &lt;a href="https://kubesphere.io/docs/">KubeSphere documentation&lt;/a> and &lt;a href="https://porterlb.io/docs/">PorterLB documentation&lt;/a>.&lt;/p>
+&lt;h2 id="architecture">Architecture&lt;/h2>
+&lt;p>&lt;img src="/images/en/blog/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/architecture.png" alt="architecture">&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>Grayscale release&lt;/p>
+&lt;p>In the preceding figure, an application Service backed by Pod v1 (stable version) is deployed in a Kubernetes cluster. After grayscale release is configured on KubeSphere, Pod v2 (beta version) is created and users can determine how much traffic is forwarded to Pod v1 and how much to Pod v2. After Pod v2 is fully tested, Pod v1 can be taken offline and Pod v2 will take over all traffic.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>KubeSphere gateway&lt;/p>
+&lt;p>The application Service is exposed to the outside by using the KubeSphere gateway, which is in effect a Service backed by a Pod that functions as a reverse proxy. An external client uses a path of a domain name to access the application Service. The reverse proxy Pod obtains the mapping between the path and the application Service from a Route object.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>PorterLB&lt;/p>
+&lt;p>PorterLB installed in the Kubernetes cluster sends an ARP packet to the router, and tells the router to forward traffic destined for the gateway Service to node 1. If node 1 fails, the traffic will be forwarded to node 2.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="procedure">Procedure&lt;/h2>
+&lt;h3 id="prerequisites">Prerequisites&lt;/h3>
+&lt;ul>
+&lt;li>You need to prepare a Kubernetes cluster, and install &lt;a href="https://kubesphere.io/docs/installing-on-kubernetes/">KubeSphere&lt;/a> and &lt;a href="https://porterlb.io/docs/getting-started/installation/">PorterLB&lt;/a> in the Kubernetes cluster.&lt;/li>
+&lt;li>On KubeSphere, you need to &lt;a href="https://kubesphere.io/docs/quick-start/create-workspace-and-project/">create a project and an account&lt;/a>. The role of the account in the project must be &lt;code>project-admin&lt;/code>.&lt;/li>
+&lt;/ul>
+&lt;h3 id="operations">Operations&lt;/h3>
+&lt;p>Step 1: Set the KubeSphere gateway to use PorterLB and create an Eip object.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to KubeSphere and go to your project.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Choose &lt;strong>Project Settings&lt;/strong> &amp;gt; &lt;strong>Advanced Settings&lt;/strong> on the left navigation bar and click &lt;strong>Set Gateway&lt;/strong> on the right.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Click &lt;strong>LoadBalancer&lt;/strong>, set &lt;strong>Application Governance&lt;/strong> to &lt;strong>On&lt;/strong>, add the following annotations, and click &lt;strong>Save&lt;/strong>. The annotations set the KubeSphere gateway Service to use PorterLB in Layer 2 mode.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">lb.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">protocol.porter.kubesphere.io/v1alpha1&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">eip.porter.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#8f5902;font-style:italic"># Name of the Eip object.&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Move the cursor to &lt;img src="/images/en/blog/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/kubectl.png" width="25px"> in the lower-right corner and click &lt;strong>Kubectl&lt;/strong> to open the CLI.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Run the &lt;code>vi porter-layer2-eip.yaml&lt;/code> command to create a YAML file for an Eip object and add the following information to the YAML file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">apiVersion&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">network.kubesphere.io/v1alpha2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">kind&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">Eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">metadata&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">name&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">porter-layer2-eip&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">&lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#8f5902;font-style:italic"># Use an unoccupied address on the same network segment as your K8s cluster.&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">address&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">192.168.0.100&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">interface&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">eth0&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">protocol&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#000">layer2&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the &lt;code>kubectl apply -f eip.yaml&lt;/code> command to create the Eip object, which functions as an IP address pool for PorterLB.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>Step 2: Create an application.&lt;/p>
+&lt;ol>
+&lt;li>Choose &lt;strong>Application Workloads&lt;/strong> on the left navigation bar and click &lt;strong>Create Composing Application&lt;/strong> on the right.&lt;/li>
+&lt;li>Set &lt;strong>Application Name&lt;/strong> to &lt;strong>demo-app&lt;/strong>, &lt;strong>Application Version(Optional)&lt;/strong> to &lt;strong>v1&lt;/strong>, &lt;strong>Application Governance&lt;/strong> to &lt;strong>On&lt;/strong>, and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Add Service&lt;/strong>, click &lt;strong>Stateless Service&lt;/strong>, set &lt;strong>Name&lt;/strong> to &lt;code>demo-svc&lt;/code>, and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Add Container Image&lt;/strong>, set &lt;strong>Image&lt;/strong> to &lt;code>luksa/kubia&lt;/code>, &lt;strong>Container Port&lt;/strong> to &lt;code>8080&lt;/code>, &lt;strong>Service Port&lt;/strong> to &lt;code>80&lt;/code>, click &lt;strong>√&lt;/strong>, and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Next&lt;/strong> on the &lt;strong>Mount Volumes&lt;/strong> tab, click &lt;strong>Add&lt;/strong> on the &lt;strong>Advanced Settings&lt;/strong> tab, and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Add Route Rule&lt;/strong>, click &lt;strong>Specify Domain&lt;/strong>, set &lt;strong>HostName&lt;/strong> to &lt;code>demo.com&lt;/code>, &lt;strong>Paths&lt;/strong> to &lt;code>/path | demo-svc | 80&lt;/code>, and click &lt;strong>OK&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Create&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;p>Step 3: Configure grayscale release.&lt;/p>
+&lt;ol>
+&lt;li>Choose &lt;strong>Grayscale Release&lt;/strong> on the left navigation bar, move the cursor to &lt;strong>Canary Release&lt;/strong>, and click &lt;strong>Create Job&lt;/strong>.&lt;/li>
+&lt;li>Set &lt;strong>Release Job Name&lt;/strong> to &lt;code>demo-canary&lt;/code> and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Select &lt;code>demo-app&lt;/code> from the drop-down list, click &lt;strong>Select&lt;/strong> on the right of &lt;strong>demo-svc&lt;/strong>, and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Set &lt;strong>Grayscale Release Version Number&lt;/strong> to &lt;code>v2&lt;/code> and click &lt;strong>Next&lt;/strong>.&lt;/li>
+&lt;li>Click &lt;strong>Create&lt;/strong> on the &lt;strong>Policy Config&lt;/strong> tab.&lt;/li>
+&lt;/ol>
+&lt;p>Step 4: Test grayscale release.&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Choose &lt;strong>Grayscale Release&lt;/strong> on the left navigation bar, click the &lt;strong>Job Status&lt;/strong> tab, and click &lt;strong>demo-canary&lt;/strong> on the right.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the &lt;strong>Real-time traffic distribution&lt;/strong> area, move the slider so that 100% traffic is sent to v2.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Log in to a client machine connected to the gateway Service IP address (configured in the Eip object) and add the domain name information to the &lt;code>etc/hosts&lt;/code> file:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">192.168.0.100 demo.com
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>On the client machine, run the &lt;code>curl demo.com/path&lt;/code> command for multiple times to access the application Service.&lt;/p>
+&lt;p>If grayscale release functions properly, only v2 can be accessed.&lt;/p>
+&lt;img src="/images/en/blog/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/v2.png" width="600px">
+&lt;/li>
+&lt;li>
+&lt;p>On KubeSphere, repeat step 2 so that 100% traffic is sent to v1.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>On the client machine, run the &lt;code>curl demo.com/path&lt;/code> command for multiple times to access the application Service.&lt;/p>
+&lt;p>If grayscale release functions properly, only v1 can be accessed.&lt;/p>
+&lt;img src="/images/en/blog/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/v1.png" width="600px">
+&lt;/li>
+&lt;li>
+&lt;p>After v2 is fully tested, you can set v2 to take over all traffic and take the canary release job offline to formally release v2.&lt;/p>
+&lt;img src="/images/en/blog/kubesphere-porterlb-implement-grayscale-release-on-bare-metal-kubernetes/job-offline.png">
+&lt;/li>
+&lt;/ol></description></item><item><title>Blog: PorterLB for Bare-Metal Kubernetes: Cloud Native, Elegant, and Flexible</title><link>/blog/2021/02/25/porterlb-for-bare-metal-kubernetes-cloud-native-elegant-and-flexible/</link><pubDate>Thu, 25 Feb 2021 00:00:00 +0000</pubDate><guid>/blog/2021/02/25/porterlb-for-bare-metal-kubernetes-cloud-native-elegant-and-flexible/</guid><description>
+&lt;p>Applications deployed on Kubernetes are usually exposed by using LoadBalancer Services, which rely heavily on load balancer implementations provided by cloud vendors. For applications deployed in bare-metal Kubernetes clusters, where cloud-based load balancer implementations are unavailable, Kubernetes has yet to provide a viable LoadBalancer solution.&lt;/p>
+&lt;p>PorterLB well addresses this problem. As a sub-project of &lt;a href="https://kubesphere.io/">KubeSphere&lt;/a>, PorterLB boosts application containerization in bare-metal Kubernetes environments, and complements the KubeSphere ecosystem in the bare-metal field.&lt;/p>
+&lt;p>In this article, I am going to introduce how PorterLB functions in Layer 2 mode and BGP mode, which are provided for users to expose applications in different scenarios, and the advantages of PorterLB compared with other bare-metal load balancer implementations such as MetalLB.&lt;/p>
+&lt;h2 id="bgp-mode">BGP Mode&lt;/h2>
+&lt;p>In BGP mode, PorterLB publishes routes to a BGP router deployed outside the Kubernetes cluster, and the BGP router forwards Service traffic from external clients to the Kubernetes cluster nodes based on the routes obtained from PorterLB. In this process, PorterLB uses Equal-Cost Multi-Path (ECMP) routing to ensure that all Kubernetes nodes or nodes that contain Pods, depending on the user configuration, are used as next hops by the BGP router.&lt;/p>
+&lt;p>&lt;img src="/images/en/blog/porterlb-for-bare-metal-kubernetes-cloud-native-elegant-and-flexible/porter-bgp-topology.jpg" alt="porter-bgp-topology">&lt;/p>
+&lt;p>The process of using PorterLB in BGP mode in a Kubernetes cluster is simple:&lt;/p>
+&lt;ol>
+&lt;li>Install PorterLB.&lt;/li>
+&lt;li>Configure an IP address pool by using Eip.&lt;/li>
+&lt;li>Configure BGP properties by using BgpConf and BgpPeer.&lt;/li>
+&lt;li>Create a Service and set the Service to use PorterLB, which is similar to what you do to use a load balancer plugin in a cloud-based Kubernetes cluster.&lt;/li>
+&lt;/ol>
+&lt;p>PorterLB can be configured by using the Eip, BgpConf, and BgpPeer CRDs, no other configuration files are required. In addition, as BGP is decentralized, you can use the BGP mode to easily establish a high availability network free of failover interruptions and bandwidth bottlenecks.&lt;/p>
+&lt;p>&lt;img src="/images/en/blog/porterlb-for-bare-metal-kubernetes-cloud-native-elegant-and-flexible/high-availability-network.jpg" alt="high-availability-network">&lt;/p>
+&lt;h2 id="layer-2-mode">Layer 2 Mode&lt;/h2>
+&lt;p>Generally, you are advised to use the BGP mode to expose your Services in a high availability network. However, BGP may be unavailable in certain systems because of security requirements or because the router does not support BGP. In this case, you can use PorterLB in Layer 2 mode to achieve similar functionality.&lt;/p>
+&lt;p>In Layer 2 mode, PorterLB uses ARP packets (for IPv4) or NDP packets (for IPv6) to map the Service IP address to the MAC address of a Kubernetes node. The mechanism of the Layer 2 mode is similar to that of the BGP mode, except that BGP is replaced with ARP/NDP and the router obtains only one route destined for the Service.&lt;/p>
+&lt;p>&lt;img src="/images/en/blog/porterlb-for-bare-metal-kubernetes-cloud-native-elegant-and-flexible/porter-layer-2-topology.jpg" alt="porter-layer-2-topology">&lt;/p>
+&lt;p>Though the Layer 2 mode does not provide the same high availability as the BGP mode does, it is easier to use (you don&amp;rsquo;t even need to configure BGP properties):&lt;/p>
+&lt;ol>
+&lt;li>Install PorterLB.&lt;/li>
+&lt;li>Configure an IP address pool by using Eip.&lt;/li>
+&lt;li>Create a Service and set the Service to use PorterLB.&lt;/li>
+&lt;/ol>
+&lt;p>You can obtain detailed guidance on how to install, configure, and use PorterLB from the &lt;a href="https://porterlb.io/docs/">PorterLB documentation&lt;/a>.&lt;/p>
+&lt;h2 id="advantages-of-porterlb">Advantages of PorterLB&lt;/h2>
+&lt;p>There are other load balancer implementations such as MetalLB designed for bare-metal Kubernetes clusters. Compared with others, PorterLB has the following advantages.&lt;/p>
+&lt;h3 id="cloud-native">Cloud native&lt;/h3>
+&lt;p>To manage IP address pools and BGP properties for PorterLB, you only need to use the &lt;code>kubectl apply&lt;/code> command provided by Kubernetes to create CRD objects. To obtain the status information about IP address pools and BGP peers, you can simply run &lt;code>kubectl get&lt;/code> to view the status of the CRD objects. No other configuration files are required. In addition, a PorterLB GUI will be available soon, which will further simplify the usage of PorterLB.&lt;/p>
+&lt;h3 id="elegant">Elegant&lt;/h3>
+&lt;p>After PorterLB is installed in a Kubernetes cluster, a porter-manager Deployment that contains a porter-manager Pod is created. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster. For high availability, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes. This simple architecture ensures that PorterLB can be easily managed and integrated with other systems.&lt;/p>
+&lt;h3 id="flexible">Flexible&lt;/h3>
+&lt;p>PorterLB can be used in conventional Kubernetes clusters. As a sub-project of KubeSphere, PorterLB also fits well into the KubeSphere ecosystem. You can seamlessly integrate PorterLB as a plugin with KubeSphere to utilize the abundant features of the KubeSphere ecosystem, such as observability and troubleshooting, unified monitoring and logging, centralized storage and networking management, and easy-to-use CI/CD pipelines.&lt;/p></description></item><item><title>Blog: An Open-Source Load Balancer for Bare-Metal Kubernetes</title><link>/blog/2019/06/24/an-open-source-load-balancer-for-bare-metal-kubernetes/</link><pubDate>Mon, 24 Jun 2019 00:00:00 +0000</pubDate><guid>/blog/2019/06/24/an-open-source-load-balancer-for-bare-metal-kubernetes/</guid><description>
+&lt;p>As we know, the backend workload can be exposed externally using service of type &amp;ldquo;LoadBalancer&amp;rdquo; in Kubernetes cluster. Cloud vendors often provide cloud LB plugins for Kubernetes which requires the cluster to be deployed on a specific IaaS platform. However, many enterprise users usually deploy Kubernetes clusters on bare meta especially for production use. For the on-premise bare meta clusters, Kubernetes does not provide Load-Balancer implementation. PorterLB, an open-source project, is the right solution for such issue.&lt;/p>
+&lt;p>This video will focus on the network technologies to help expose service and EIP management for bare meta Kubernetes cluster.&lt;/p>
+&lt;iframe width="560" height="315" src="https://www.youtube.com/embed/EjU1yAVxXYQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>&lt;/iframe></description></item><item><title>Blog: The Interview to PorterLB from The New Stack</title><link>/blog/2019/06/24/the-interview-to-porterlb-from-the-new-stack/</link><pubDate>Mon, 24 Jun 2019 00:00:00 +0000</pubDate><guid>/blog/2019/06/24/the-interview-to-porterlb-from-the-new-stack/</guid><description>
+&lt;p>On this livestream from KubeCon + CloudNativeCon China, Alex Williams was sitting down with Xuetao Song, Senior Software Engineer at Beijing Yunify Technology Co., Ltd. and Fang (Flora) Du, QingCloud Solution Architect at Beijing Yunify Technology Co., Ltd. to discuss open source load balancing on bare metal. PorterLB exists as an OSS solution to the issue of load balancing on bare metal in production on Kubernetes, which Song and Du are giving a presentation on at KCCNC + OSS Summit China 2019.&lt;/p>
+&lt;iframe width="560" height="315" src="https://www.youtube.com/embed/zSWypFKaYcY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>&lt;/iframe>
+&lt;h2 id="related-post">Related Post&lt;/h2>
+&lt;p>Please reference &lt;a href="https://thenewstack.io/how-a-china-based-bare-metal-service-provider-tackled-kubernetes-load-balancing/">How a China-Based Bare Metal Service Provider Tackled Kubernetes Load Balancing&lt;/a> for details.&lt;/p></description></item></channel></rss>

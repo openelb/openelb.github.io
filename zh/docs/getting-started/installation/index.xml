@@ -1,0 +1,265 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>OpenELB – Installation</title><link>/zh/docs/getting-started/installation/</link><description>Recent content in Installation on OpenELB</description><generator>Hugo -- gohugo.io</generator><atom:link href="/zh/docs/getting-started/installation/index.xml" rel="self" type="application/rss+xml"/><item><title>Docs: Install PorterLB on Kubernetes</title><link>/zh/docs/getting-started/installation/install-porter-on-kubernetes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/getting-started/installation/install-porter-on-kubernetes/</guid><description>
+&lt;p>This document describes how to use kubectl and &lt;a href="https://helm.sh/">Helm&lt;/a> to install and delete PorterLB in a Kubernetes cluster.&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>In a Kubernetes cluster, you only need to install PorterLB once. After the installation is complete, a porter-manager Deployment that contains a porter-manager Pod is installed in the cluster. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster.&lt;/li>
+&lt;li>After the installation is complete, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes to ensure high availability. For details, see &lt;a href="/docs/getting-started/configuration/configure-multiple-porter-replicas">Configure Multiple PorterLB Replicas&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>
+&lt;p>You need to prepare a Kubernetes cluster, and ensure that the Kubernetes version is 1.15 or later. PorterLB requires CustomResourceDefinition (CRD) v1, which is only supported by Kubernetes 1.15 or later. You can use the following methods to deploy a Kubernetes cluster:&lt;/p>
+&lt;ul>
+&lt;li>Use &lt;a href="https://kubesphere.io/docs/installing-on-linux/">KubeKey&lt;/a> (recommended). You can use KubeKey to deploy a Kubernetes cluster with or without KubeSphere.&lt;/li>
+&lt;li>Follow &lt;a href="https://kubernetes.io/docs/home/">official Kubernetes guides&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;p>PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based Kubernetes cluster for learning and testing.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>If you use Helm to install PorterLB, ensure that the Helm version is Helm 3.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="install-porterlb-using-kubectl">Install PorterLB Using kubectl&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the Kubernetes cluster over SSH and run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f https://raw.githubusercontent.com/kubesphere/porter/master/deploy/porter.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check whether the status of porter-manager is &lt;strong>READY&lt;/strong>: &lt;strong>1/1&lt;/strong> and &lt;strong>STATUS&lt;/strong>: &lt;strong>Running&lt;/strong>. If yes, PorterLB has been installed successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get po -n porter-system
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubernetes/verify-porter-kubectl.jpg" alt="verify-porter-kubectl">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="delete-porterlb-using-kubectl">Delete PorterLB Using kubectl&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>To delete PorterLB, log in to the Kubernetes cluster and run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl delete -f https://raw.githubusercontent.com/kubesphere/porter/master/deploy/porter.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>Before deleting PorterLB, you must first delete all Services that use PorterLB.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check the result. If the porter-system namespace does not exist, PorterLB has been deleted successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get ns
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubernetes/verify-porter-deletion-kubectl.jpg" alt="verify-porter-deletion-kubectl">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="install-porterlb-using-helm">Install PorterLB Using Helm&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the Kubernetes cluster over SSH and run the following commands:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm repo add &lt;span style="color:#204a87">test&lt;/span> https://charts.kubesphere.io/test
+helm repo update
+helm install porter test/porter
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check whether the status of porter-manager is &lt;strong>READY&lt;/strong>: &lt;strong>1/1&lt;/strong> and &lt;strong>STATUS&lt;/strong>: &lt;strong>Running&lt;/strong>. If yes, PorterLB has been installed successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get po -A
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubernetes/verify-porter-helm.jpg" alt="verify-porter-helm">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="delete-porterlb-using-helm">Delete PorterLB Using Helm&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>To delete PorterLB, run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm delete porter
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>Before deleting PorterLB, you must first delete all Services that use PorterLB.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check the result. If the PorterLB application does not exist, PorterLB has been deleted successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm ls
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubernetes/verify-porter-deletion-helm.jpg" alt="verify-porter-deletion-helm">&lt;/p>
+&lt;/li>
+&lt;/ol></description></item><item><title>Docs: Install PorterLB on KubeSphere</title><link>/zh/docs/getting-started/installation/install-porter-on-kubesphere/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/getting-started/installation/install-porter-on-kubesphere/</guid><description>
+&lt;p>This document describes how to install and delete PorterLB on the &lt;a href="https://kubesphere.io/">KubeSphere&lt;/a> web console.&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>In a Kubernetes cluster, you only need to install PorterLB once. After the installation is complete, a porter-manager Deployment that contains a porter-manager Pod is installed in the cluster. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster.&lt;/li>
+&lt;li>After the installation is complete, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes to ensure high availability. For details, see &lt;a href="/docs/getting-started/configuration/configure-multiple-porter-replicas/">Configure Multiple PorterLB Replicas&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;p>You need to prepare a Kubernetes cluster with KubeSphere, and ensure that the Kubernetes version is 1.15 or later. PorterLB requires CustomResourceDefinition (CRD) v1, which is only supported by Kubernetes 1.15 or later. You can use the following methods to install KubeSphere:&lt;/p>
+&lt;ul>
+&lt;li>&lt;a href="https://kubesphere.io/docs/installing-on-linux/">Deploy a new Kubernetes cluster with KubeSphere&lt;/a>.&lt;/li>
+&lt;li>&lt;a href="https://kubesphere.io/docs/installing-on-kubernetes/">Install KubeSphere in an existing Kubernetes cluster&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;p>PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based Kubernetes cluster for learning and testing.&lt;/p>
+&lt;h2 id="install-porterlb-on-the-kubesphere-web-console">Install PorterLB on the KubeSphere Web Console&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the KubeSphere console and go to your workspace.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/enter-workspace.jpg" alt="enter-workspace">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>On the left navigation bar, choose &lt;strong>Apps Management&lt;/strong> &amp;gt; &lt;strong>App Repos&lt;/strong>, and click &lt;strong>Add Repo&lt;/strong> on the right.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/add-repo.jpg" alt="add-repo">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the displayed dialog box, set &lt;strong>App Repository Name&lt;/strong> (for example, &lt;code>KubeSphere-test&lt;/code>), set &lt;strong>URL&lt;/strong> to &lt;code>https://charts.kubesphere.io/test&lt;/code>, click &lt;strong>Validate&lt;/strong> to check the URL, and click &lt;strong>OK&lt;/strong>.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/repo-spec.jpg" alt="repo-spec">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Go to your project, choose &lt;strong>Application Workloads&lt;/strong> &amp;gt; &lt;strong>Applications&lt;/strong> on the left navigation bar, and click &lt;strong>Deploy New Application&lt;/strong> on the right.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/deploy-new-app.jpg" alt="deploy-new-app">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>In the displayed dialog box, click &lt;strong>From App Templates&lt;/strong>.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/from-app-templates.jpg" alt="from-app-templates">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Select &lt;strong>KubeSphere-test&lt;/strong> from the drop-down list and click &lt;strong>porter&lt;/strong>.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/porter-template.jpg" alt="porter-template">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Click &lt;strong>Deploy&lt;/strong> and follow the wizard instructions to complete the installation. You can customize the chart configuration in the YAML file based on your requirements.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/deploy-porter.jpg" alt="deploy-porter">&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/porter-yaml.jpg" alt="porter-yaml">&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Choose &lt;strong>Application Workloads&lt;/strong> &amp;gt; &lt;strong>Pods&lt;/strong> on the left navigation bar to check whether the status of porter-manager is &lt;strong>running&lt;/strong>. If yes, PorterLB has been installed successfully.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/verify-porter.jpg" alt="verify-porter">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="delete-porterlb-on-the-kubesphere-web-console">Delete PorterLB on the KubeSphere Web Console&lt;/h2>
+&lt;p>To delete PorterLB on the KubeSphere web console, go to your project, choose &lt;strong>Application Workloads&lt;/strong> &amp;gt; &lt;strong>Applications&lt;/strong> on the left navigation bar, click &lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/porter-operation.jpg" alt="porter-operation"> on the right of the PorterLB application, and choose &lt;strong>Delete&lt;/strong> from the drop-down list.&lt;/p>
+&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-kubesphere/delete-porter.jpg" alt="delete-porter">&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>Before deleting PorterLB, you must first delete all Services that use PorterLB.&lt;/div>
+&lt;/div></description></item><item><title>Docs: Install PorterLB on K3s</title><link>/zh/docs/getting-started/installation/install-porter-on-k3s/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh/docs/getting-started/installation/install-porter-on-k3s/</guid><description>
+&lt;p>This document describes how to use kubectl and &lt;a href="https://helm.sh/">Helm&lt;/a> to install and delete PorterLB in a &lt;a href="https://k3s.io/">K3s&lt;/a> Kubernetes cluster.&lt;/p>
+&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>&lt;ul>
+&lt;li>In a Kubernetes cluster, you only need to install PorterLB once. After the installation is complete, a porter-manager Deployment that contains a porter-manager Pod is installed in the cluster. The porter-manager Pod implements the functionality of PorterLB for the entire Kubernetes cluster.&lt;/li>
+&lt;li>After the installation is complete, you can scale the porter-manager Deployment and assign multiple PorterLB replicas (porter-manager Pods) to multiple cluster nodes to ensure high availability. For details, see &lt;a href="/docs/getting-started/configuration/configure-multiple-porter-replicas">Configure Multiple PorterLB Replicas&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;/div>
+&lt;/div>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>
+&lt;p>You need to &lt;a href="https://rancher.com/docs/k3s/latest/en/installation/">prepare a K3s Kubernetes cluster&lt;/a>, and ensure that the Kubernetes version is 1.15 or later. PorterLB requires CustomResourceDefinition (CRD) v1, which is only supported by Kubernetes 1.15 or later. PorterLB is designed to be used in bare-metal Kubernetes environments. However, you can also use a cloud-based K3s Kubernetes cluster for learning and testing.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>If you use Helm to install PorterLB, ensure that the Helm version is Helm 3.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="install-porterlb-using-kubectl">Install PorterLB Using kubectl&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the master node of the K3s Kubernetes cluster over SSH and run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl apply -f https://raw.githubusercontent.com/kubesphere/porter/master/deploy/porter.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to edit the porter-manager Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl edit deployment porter-manager -n porter-system
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Change port 443 to a different value (for example, 30443) to avoid a port conflict with K3s:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">template&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">spec&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">containers&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">args&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- --&lt;span style="color:#000">webhook-port=443&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">ports&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>- &lt;span style="color:#204a87;font-weight:bold">containerPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">443&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#204a87;font-weight:bold">hostPort&lt;/span>&lt;span style="color:#000;font-weight:bold">:&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#0000cf;font-weight:bold">443&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline"> &lt;/span>&lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>&lt;span style="color:#f8f8f8;text-decoration:underline">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>By default, both PorterLB and K3s use port 443. Therefore, you need to change port 443 of PorterLB to avoid the port conflict. For details, see the &lt;a href="https://rancher.com/docs/k3s/latest/en/networking/#traefik-ingress-controller">official K3s document&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check whether the status of porter-manager is &lt;strong>READY&lt;/strong>: &lt;strong>1/1&lt;/strong> and &lt;strong>STATUS&lt;/strong>: &lt;strong>Running&lt;/strong>. If yes, PorterLB has been installed successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get po -n porter-system
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-k3s/verify-porter-kubectl.jpg" alt="verify-porter-kubectl">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="delete-porterlb-using-kubectl">Delete PorterLB Using kubectl&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>To delete PorterLB, log in to the master node of the K3s Kubernetes cluster and run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl delete -f https://raw.githubusercontent.com/kubesphere/porter/master/deploy/porter.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>Before deleting PorterLB, you must first delete all Services that use PorterLB.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check the result. If the porter-system namespace does not exist, PorterLB has been deleted successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get ns
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-k3s/verify-porter-deletion-kubectl.jpg" alt="verify-porter-deletion-kubectl">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="install-porterlb-using-helm">Install PorterLB Using Helm&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>Log in to the master node of the K3s Kubernetes cluster over SSH and run the following command to configure the environment variable:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#204a87">export&lt;/span> &lt;span style="color:#000">KUBECONFIG&lt;/span>&lt;span style="color:#ce5c00;font-weight:bold">=&lt;/span>/etc/rancher/k3s/k3s.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>You need to configure this environment variable so that Helm can reach the K3s Kubernetes cluster. For details, see the &lt;a href="https://rancher.com/docs/k3s/latest/en/cluster-access/">official K3s document&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following commands to install PorterLB:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm repo add &lt;span style="color:#204a87">test&lt;/span> https://charts.kubesphere.io/test
+helm repo update
+helm install porter test/porter
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Run the following command to edit the porter-manager Deployment:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl edit deployment porter-manager
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>Change port 443 to a different value (for example, 30443) to avoid a port conflict with K3s:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">spec:
+template:
+spec:
+containers:
+- args:
+- --webhook-port&lt;span style="color:#ce5c00;font-weight:bold">=&lt;/span>&lt;span style="color:#0000cf;font-weight:bold">443&lt;/span> &lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>
+ports:
+- containerPort: &lt;span style="color:#0000cf;font-weight:bold">443&lt;/span> &lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>
+hostPort: &lt;span style="color:#0000cf;font-weight:bold">443&lt;/span> &lt;span style="color:#8f5902;font-style:italic"># Change the port number.&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>By default, both PorterLB and K3s use port 443. Therefore, you need to change port 443 of PorterLB to avoid the port conflict. For details, see the &lt;a href="https://rancher.com/docs/k3s/latest/en/networking/#traefik-ingress-controller">official K3s document&lt;/a>.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check whether the status of porter-manager is &lt;strong>READY&lt;/strong>: &lt;strong>1/1&lt;/strong> and &lt;strong>STATUS&lt;/strong>: &lt;strong>Running&lt;/strong>. If yes, PorterLB has been installed successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">kubectl get po -A
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-k3s/verify-porter-helm.jpg" alt="verify-porter-helm">&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h2 id="delete-porterlb-using-helm">Delete PorterLB Using Helm&lt;/h2>
+&lt;ol>
+&lt;li>
+&lt;p>To delete PorterLB, run the following command:&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm delete porter
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="notices note">
+&lt;p>NOTE&lt;/p>
+&lt;div>Before deleting PorterLB, you must first delete all Services that use PorterLB.&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;li>
+&lt;p>Run the following command to check the result. If the PorterLB application does not exist, PorterLB has been deleted successfully.&lt;/p>
+&lt;div class="highlight">&lt;pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">helm ls
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="/images/en/docs/getting-started/installation/install-porter-on-k3s/verify-porter-deletion-helm.jpg" alt="verify-porter-deletion-helm">&lt;/p>
+&lt;/li>
+&lt;/ol></description></item></channel></rss>
