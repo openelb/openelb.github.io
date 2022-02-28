@@ -20,16 +20,6 @@
   <url>
     <loc>/zh/docs/building-and-contributing/build-the-porter-project/</loc>
     <lastmod>2021-03-25T11:20:42+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/building-and-contributing/build-the-porter-project/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/building-and-contributing/build-the-porter-project/"
-                />
   </url>
   
   <url>
@@ -50,16 +40,6 @@
   <url>
     <loc>/zh/docs/getting-started/installation/install-porter-on-kubernetes/</loc>
     <lastmod>2021-12-08T13:15:46+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-kubernetes/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-kubernetes/"
-                />
   </url>
   
   <url>
@@ -110,31 +90,11 @@
   <url>
     <loc>/zh/docs/getting-started/usage/use-porter-in-bgp-mode/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/usage/use-porter-in-bgp-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/usage/use-porter-in-bgp-mode/"
-                />
   </url>
   
   <url>
     <loc>/zh/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/"
-                />
   </url>
   
   <url>
@@ -170,76 +130,26 @@
   <url>
     <loc>/zh/docs/getting-started/configuration/configure-porter-in-bgp-mode/</loc>
     <lastmod>2021-03-25T11:20:42+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-porter-in-bgp-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-porter-in-bgp-mode/"
-                />
   </url>
   
   <url>
     <loc>/zh/docs/building-and-contributing/contribute-to-the-porter-project/</loc>
     <lastmod>2021-03-25T11:20:42+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/building-and-contributing/contribute-to-the-porter-project/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/building-and-contributing/contribute-to-the-porter-project/"
-                />
   </url>
   
   <url>
     <loc>/zh/docs/getting-started/installation/install-porter-on-kubesphere/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-kubesphere/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-kubesphere/"
-                />
   </url>
   
   <url>
     <loc>/zh/docs/getting-started/usage/use-porter-in-layer-2-mode/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/usage/use-porter-in-layer-2-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/usage/use-porter-in-layer-2-mode/"
-                />
   </url>
   
   <url>
     <loc>/zh/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/"
-                />
   </url>
   
   <url>
@@ -260,16 +170,6 @@
   <url>
     <loc>/zh/docs/getting-started/installation/install-porter-on-k3s/</loc>
     <lastmod>2021-12-08T13:15:46+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-k3s/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-k3s/"
-                />
   </url>
   
   <url>
@@ -305,16 +205,6 @@
   <url>
     <loc>/zh/docs/getting-started/configuration/configure-multiple-porter-replicas/</loc>
     <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-multiple-porter-replicas/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-multiple-porter-replicas/"
-                />
   </url>
   
   <url>

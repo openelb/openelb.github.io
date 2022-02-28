@@ -21,23 +21,23 @@
 <link rel="icon" type="image/png" href="/favicons/android-192x192.png" sizes="192x192">
 
 <title>Configure IP Address Pools Using Eip | OpenELB</title><meta property="og:title" content="Configure IP Address Pools Using Eip" />
-<meta property="og:description" content="This document describes how to configure an Eip object, which functions as an IP address pool for PorterLB both in BGP mode and in Layer 2 mode.
-PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, PorterLB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6)." />
+<meta property="og:description" content="This document describes how to configure an Eip object, which functions as an IP address pool for OpenELB both in BGP mode and in Layer 2 mode.
+OpenELB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, OpenELB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6)." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="/docs/getting-started/configuration/configure-ip-address-pools-using-eip/" />
-<meta property="article:modified_time" content="2021-02-25T11:37:08+08:00" /><meta property="og:site_name" content="OpenELB" />
+<meta property="article:modified_time" content="2022-02-23T10:46:39+08:00" /><meta property="og:site_name" content="OpenELB" />
 <meta itemprop="name" content="Configure IP Address Pools Using Eip">
-<meta itemprop="description" content="This document describes how to configure an Eip object, which functions as an IP address pool for PorterLB both in BGP mode and in Layer 2 mode.
-PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, PorterLB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6).">
-<meta itemprop="dateModified" content="2021-02-25T11:37:08&#43;08:00" />
+<meta itemprop="description" content="This document describes how to configure an Eip object, which functions as an IP address pool for OpenELB both in BGP mode and in Layer 2 mode.
+OpenELB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, OpenELB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6).">
+<meta itemprop="dateModified" content="2022-02-23T10:46:39&#43;08:00" />
 <meta itemprop="wordCount" content="491">
 
 
 
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Configure IP Address Pools Using Eip"/>
-<meta name="twitter:description" content="This document describes how to configure an Eip object, which functions as an IP address pool for PorterLB both in BGP mode and in Layer 2 mode.
-PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, PorterLB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6)."/>
+<meta name="twitter:description" content="This document describes how to configure an Eip object, which functions as an IP address pool for OpenELB both in BGP mode and in Layer 2 mode.
+OpenELB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, OpenELB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6)."/>
 
 
 
@@ -292,8 +292,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-porter-on-kubernetes"   href="/docs/getting-started/installation/install-porter-on-kubernetes/">
-            Install PorterLB on Kubernetes
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-openelb-on-kubernetes"   href="/docs/getting-started/installation/install-openelb-on-kubernetes/">
+            Install OpenELB on Kubernetes
           </a>
         
       
@@ -301,8 +301,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-porter-on-kubesphere"   href="/docs/getting-started/installation/install-porter-on-kubesphere/">
-            Install PorterLB on KubeSphere
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-openelb-on-kubesphere"   href="/docs/getting-started/installation/install-openelb-on-kubesphere/">
+            Install OpenELB on KubeSphere
           </a>
         
       
@@ -310,8 +310,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-porter-on-k3s"   href="/docs/getting-started/installation/install-porter-on-k3s/">
-            Install PorterLB on K3s
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedinstallationinstall-openelb-on-k3s"   href="/docs/getting-started/installation/install-openelb-on-k3s/">
+            Install OpenELB on K3s
           </a>
         
       
@@ -357,8 +357,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-porter-in-bgp-mode"   href="/docs/getting-started/configuration/configure-porter-in-bgp-mode/">
-            Configure PorterLB in BGP Mode
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-openelb-in-bgp-mode"   href="/docs/getting-started/configuration/configure-openelb-in-bgp-mode/">
+            Configure OpenELB in BGP Mode
           </a>
         
       
@@ -366,8 +366,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-porter-for-multi-router-clusters"   href="/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/">
-            Configure PorterLB for Multi-router Clusters (BGP Mode)
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-openelb-for-multi-router-clusters"   href="/docs/getting-started/configuration/configure-openelb-for-multi-router-clusters/">
+            Configure OpenELB for Multi-router Clusters (BGP Mode)
           </a>
         
       
@@ -375,8 +375,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-multiple-porter-replicas"   href="/docs/getting-started/configuration/configure-multiple-porter-replicas/">
-            Configure Multiple PorterLB Replicas
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedconfigurationconfigure-multiple-openelb-replicas"   href="/docs/getting-started/configuration/configure-multiple-openelb-replicas/">
+            Configure Multiple OpenELB Replicas
           </a>
         
       
@@ -413,8 +413,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedusageuse-porter-in-bgp-mode"   href="/docs/getting-started/usage/use-porter-in-bgp-mode/">
-            Use PorterLB in BGP Mode
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedusageuse-openelb-in-bgp-mode"   href="/docs/getting-started/usage/use-openelb-in-bgp-mode/">
+            Use OpenELB in BGP Mode
           </a>
         
       
@@ -422,8 +422,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedusageuse-porter-in-layer-2-mode"   href="/docs/getting-started/usage/use-porter-in-layer-2-mode/">
-            Use PorterLB in Layer 2 Mode
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsgetting-startedusageuse-openelb-in-layer-2-mode"   href="/docs/getting-started/usage/use-openelb-in-layer-2-mode/">
+            Use OpenELB in Layer 2 Mode
           </a>
         
       
@@ -466,8 +466,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsbuilding-and-contributingbuild-the-porter-project"   href="/docs/building-and-contributing/build-the-porter-project/">
-            Build the PorterLB Project
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsbuilding-and-contributingbuild-the-openelb-project"   href="/docs/building-and-contributing/build-the-openelb-project/">
+            Build the OpenELB Project
           </a>
         
       
@@ -475,8 +475,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsbuilding-and-contributingcontribute-to-the-porter-project"   href="/docs/building-and-contributing/contribute-to-the-porter-project/">
-            Contribute to the PorterLB Project
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsbuilding-and-contributingcontribute-to-the-openelb-project"   href="/docs/building-and-contributing/contribute-to-the-openelb-project/">
+            Contribute to the OpenELB Project
           </a>
         
       
@@ -513,8 +513,8 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
           
           
           
-          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsfaqswhat-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state"   href="/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/">
-            What do I do if the porter-manager Pod is stuck in pending state?
+          <a class="td-sidebar-link td-sidebar-link__page " id="m-docsfaqswhat-do-i-do-if-the-openelb-manager-pod-is-stuck-in-pending-state"   href="/docs/faqs/what-do-i-do-if-the-openelb-manager-pod-is-stuck-in-pending-state/">
+            What do I do if the openelb-manager Pod is stuck in pending state?
           </a>
         
       
@@ -611,15 +611,15 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
 <div class="td-content">
 	<h1>Configure IP Address Pools Using Eip</h1>
 	
-	<p>This document describes how to configure an Eip object, which functions as an IP address pool for PorterLB both in BGP mode and in Layer 2 mode.</p>
-<p>PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, PorterLB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6).</p>
+	<p>This document describes how to configure an Eip object, which functions as an IP address pool for OpenELB both in BGP mode and in Layer 2 mode.</p>
+<p>OpenELB assigns IP addresses in Eip objects to LoadBalancer Services in the Kubernetes cluster. After that, OpenELB publishes routes destined for the Service IP addresses over BGP (in BGP mode), ARP (in Layer 2 mode for IPv4), or NDP (in Layer 2 mode for IPv6).</p>
 <div class="notices note">
   
   <p>NOTE</p>
-  <div>Currently, PorterLB supports only IPv4 and will soon support IPv6.</div>
+  <div>Currently, OpenELB supports only IPv4 and will soon support IPv6.</div>
 </div>
-<h2 id="configure-an-eip-object-for-porterlb">Configure an Eip Object for PorterLB</h2>
-<p>You can create an Eip object to provide an IP address pool for PorterLB. The following is an example of the Eip YAML configuration:</p>
+<h2 id="configure-an-eip-object-for-openelb">Configure an Eip Object for OpenELB</h2>
+<p>You can create an Eip object to provide an IP address pool for OpenELB. The following is an example of the Eip YAML configuration:</p>
 <div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#204a87;font-weight:bold">apiVersion</span><span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>network.kubesphere.io/v1alpha2<span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline"></span><span style="color:#204a87;font-weight:bold">kind</span><span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline"> </span>Eip<span style="color:#f8f8f8;text-decoration:underline">
 </span><span style="color:#f8f8f8;text-decoration:underline"></span><span style="color:#204a87;font-weight:bold">metadata</span><span style="color:#000;font-weight:bold">:</span><span style="color:#f8f8f8;text-decoration:underline">
@@ -647,7 +647,7 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
 <p><code>spec</code>:</p>
 <ul>
 <li>
-<p><code>address</code>: One or more IP addresses, which will be used by PorterLB. The value format can be:</p>
+<p><code>address</code>: One or more IP addresses, which will be used by OpenELB. The value format can be:</p>
 <ul>
 <li><code>IP address</code>, for example, <code>192.168.0.100</code>.</li>
 <li><code>IP address/Subnet mask</code>, for example, <code>192.168.0.0/24</code>.</li>
@@ -660,21 +660,21 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
 </div>
 </li>
 <li>
-<p><code>protocol</code>: Specifies which mode of PorterLB the Eip object is used for. The value can be either <code>layer2</code> or <code>bgp</code>. If this field is not specified, the default value <code>bgp</code> is used.</p>
+<p><code>protocol</code>: Specifies which mode of OpenELB the Eip object is used for. The value can be either <code>layer2</code> or <code>bgp</code>. If this field is not specified, the default value <code>bgp</code> is used.</p>
 </li>
 <li>
-<p><code>interface</code>: NIC on which PorterLB listens for ARP or NDP requests. This field is valid only when <code>protocol</code> is set to <code>layer2</code>.</p>
+<p><code>interface</code>: NIC on which OpenELB listens for ARP or NDP requests. This field is valid only when <code>protocol</code> is set to <code>layer2</code>.</p>
 <div class="notices tip">
   
   <p>TIP</p>
-  <div>If the NIC names of the Kubernetes cluster nodes are different, you can set the value to <code>can_reach:IP address</code> (for example, <code>can_reach:192.168.0.5</code>) so that PorterLB automatically obtains the name of the NIC that can reach the IP address. In this case, you must ensure that the IP address is not used by Kubernetes cluster nodes but can be reached by the cluster nodes.</div>
+  <div>If the NIC names of the Kubernetes cluster nodes are different, you can set the value to <code>can_reach:IP address</code> (for example, <code>can_reach:192.168.0.5</code>) so that OpenELB automatically obtains the name of the NIC that can reach the IP address. In this case, you must ensure that the IP address is not used by Kubernetes cluster nodes but can be reached by the cluster nodes.</div>
 </div>
 </li>
 <li>
 <p><code>disable</code>: Specifies whether the Eip object is disabled. The value can be:</p>
 <ul>
-<li><code>false</code>: PorterLB can assign IP addresses in the Eip object to new LoadBalancer Services.</li>
-<li><code>true</code>: PorterLB stops assigning IP addresses in the Eip object to new LoadBalancer Services. Existing Services are not affected.</li>
+<li><code>false</code>: OpenELB can assign IP addresses in the Eip object to new LoadBalancer Services.</li>
+<li><code>true</code>: OpenELB stops assigning IP addresses in the Eip object to new LoadBalancer Services. Existing Services are not affected.</li>
 </ul>
 </li>
 </ul>
@@ -699,10 +699,10 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
 <p><code>lastIP</code>: Last IP address in the Eip object.</p>
 </li>
 <li>
-<p><code>v4</code>: Specifies whether the address family is IPv4. Currently, PorterLB supports only IPv4 and the value can only be <code>true</code>.</p>
+<p><code>v4</code>: Specifies whether the address family is IPv4. Currently, OpenELB supports only IPv4 and the value can only be <code>true</code>.</p>
 </li>
 <li>
-<p><code>ready</code>: Specifies whether the Eip-associated program used for BGP/ARP/NDP routes publishing has been initialized. The program is integrated in PorterLB.</p>
+<p><code>ready</code>: Specifies whether the Eip-associated program used for BGP/ARP/NDP routes publishing has been initialized. The program is integrated in OpenELB.</p>
 </li>
 </ul>
 
@@ -768,7 +768,7 @@ PorterLB assigns IP addresses in Eip objects to LoadBalancer Services in the Kub
 		<br />
 	
 	
-	<div class="text-muted mt-5 pt-3 border-top">Last modified February 25, 2021: <a  href="https://github.com/kubesphere/kubesphere.github.io/commit/4ba156788ae90877f151ba24de957608cf94643f">Capitalized terms. (4ba1567)</a>
+	<div class="text-muted mt-5 pt-3 border-top">Last modified February 23, 2022: <a  href="https://github.com/kubesphere/kubesphere.github.io/commit/5c5431fd5ccef780c1910234576da9e5389b3c88">rename to openelb in English document (5c5431f)</a>
 </div>
 </div>
 

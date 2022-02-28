@@ -4,7 +4,7 @@
   
   <url>
     <loc>/docs/concepts/bgp-mode/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -18,23 +18,13 @@
   </url>
   
   <url>
-    <loc>/docs/building-and-contributing/build-the-porter-project/</loc>
-    <lastmod>2021-03-25T17:06:23+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/building-and-contributing/build-the-porter-project/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/building-and-contributing/build-the-porter-project/"
-                />
+    <loc>/docs/building-and-contributing/build-the-openelb-project/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/getting-started/configuration/configure-ip-address-pools-using-eip/</loc>
-    <lastmod>2021-02-25T11:37:08+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -48,23 +38,13 @@
   </url>
   
   <url>
-    <loc>/docs/getting-started/installation/install-porter-on-kubernetes/</loc>
-    <lastmod>2021-12-08T13:15:46+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-kubernetes/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-kubernetes/"
-                />
+    <loc>/docs/getting-started/installation/install-openelb-on-kubernetes/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/getting-started/installation/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -79,7 +59,7 @@
   
   <url>
     <loc>/docs/concepts/layer-2-mode/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -108,38 +88,18 @@
   </url>
   
   <url>
-    <loc>/docs/getting-started/usage/use-porter-in-bgp-mode/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/usage/use-porter-in-bgp-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/usage/use-porter-in-bgp-mode/"
-                />
+    <loc>/docs/getting-started/usage/use-openelb-in-bgp-mode/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/"
-                />
+    <loc>/docs/faqs/what-do-i-do-if-the-openelb-manager-pod-is-stuck-in-pending-state/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/concepts/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -154,7 +114,7 @@
   
   <url>
     <loc>/docs/getting-started/configuration/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -168,83 +128,33 @@
   </url>
   
   <url>
-    <loc>/docs/getting-started/configuration/configure-porter-in-bgp-mode/</loc>
-    <lastmod>2021-03-12T17:37:39+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-porter-in-bgp-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-porter-in-bgp-mode/"
-                />
+    <loc>/docs/getting-started/configuration/configure-openelb-in-bgp-mode/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/docs/building-and-contributing/contribute-to-the-porter-project/</loc>
-    <lastmod>2021-03-25T17:06:23+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/building-and-contributing/contribute-to-the-porter-project/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/building-and-contributing/contribute-to-the-porter-project/"
-                />
+    <loc>/docs/building-and-contributing/contribute-to-the-openelb-project/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/docs/getting-started/installation/install-porter-on-kubesphere/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-kubesphere/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-kubesphere/"
-                />
+    <loc>/docs/getting-started/installation/install-openelb-on-kubesphere/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/docs/getting-started/usage/use-porter-in-layer-2-mode/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/usage/use-porter-in-layer-2-mode/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/usage/use-porter-in-layer-2-mode/"
-                />
+    <loc>/docs/getting-started/usage/use-openelb-in-layer-2-mode/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-porter-for-multi-router-clusters/"
-                />
+    <loc>/docs/getting-started/configuration/configure-openelb-for-multi-router-clusters/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/getting-started/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -258,23 +168,13 @@
   </url>
   
   <url>
-    <loc>/docs/getting-started/installation/install-porter-on-k3s/</loc>
-    <lastmod>2021-12-08T13:15:46+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/installation/install-porter-on-k3s/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/installation/install-porter-on-k3s/"
-                />
+    <loc>/docs/getting-started/installation/install-openelb-on-k3s/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/getting-started/usage/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -289,7 +189,7 @@
   
   <url>
     <loc>/docs/building-and-contributing/</loc>
-    <lastmod>2021-04-07T13:28:04+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -303,23 +203,13 @@
   </url>
   
   <url>
-    <loc>/docs/getting-started/configuration/configure-multiple-porter-replicas/</loc>
-    <lastmod>2021-03-31T10:27:04+08:00</lastmod>
-    <xhtml:link
-                rel="alternate"
-                hreflang="zh"
-                href="/zh/docs/getting-started/configuration/configure-multiple-porter-replicas/"
-                />
-    <xhtml:link
-                rel="alternate"
-                hreflang="en"
-                href="/docs/getting-started/configuration/configure-multiple-porter-replicas/"
-                />
+    <loc>/docs/getting-started/configuration/configure-multiple-openelb-replicas/</loc>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
   </url>
   
   <url>
     <loc>/docs/faqs/</loc>
-    <lastmod>2021-03-11T10:39:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"
@@ -334,7 +224,7 @@
   
   <url>
     <loc>/docs/</loc>
-    <lastmod>2021-02-23T15:37:17+08:00</lastmod>
+    <lastmod>2022-02-23T10:46:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="zh"

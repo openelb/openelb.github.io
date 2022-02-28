@@ -14,25 +14,29 @@
     
     
     <item>
-      <title>Docs: What do I do if the porter-manager Pod is stuck in pending state?</title>
-      <link>/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/</link>
+      <title>Docs: What do I do if the openelb-manager Pod is stuck in pending state?</title>
+      <link>/docs/faqs/what-do-i-do-if-the-openelb-manager-pod-is-stuck-in-pending-state/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/docs/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/</guid>
+      <guid>/docs/faqs/what-do-i-do-if-the-openelb-manager-pod-is-stuck-in-pending-state/</guid>
       <description>
         
         
         &lt;h2 id=&#34;symptom&#34;&gt;Symptom&lt;/h2&gt;
-&lt;p&gt;During the installation of PorterLB, the porter-manager Pod is stuck in pending state.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/images/en/docs/getting-started/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/porter-manager-pending.jpg&#34; alt=&#34;porter-manager-pending&#34;&gt;&lt;/p&gt;
-&lt;h2 id=&#34;possible-cause&#34;&gt;Possible Cause&lt;/h2&gt;
-&lt;p&gt;PorterLB uses port 443 by default. If another component in the system has occupied port 443, the porter-manager Pod will be stuck in pending state.&lt;/p&gt;
+&lt;p&gt;During the installation of OpenELB, the openelb-manager Pod is stuck in pending state.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;root@node1:~/openelb# kubectl get pod -n openelb-system
+NAME                               READY   STATUS      RESTARTS   AGE
+openelb-admission-create-m2p52     0/1     Completed   &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          30s
+openelb-admission-patch-qmvnq      0/1     Completed   &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          30s
+openelb-manager-74c5467674-pgtmh   0/1     Pending     &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          30s
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;possible-cause&#34;&gt;Possible Cause&lt;/h2&gt;
+&lt;p&gt;OpenELB uses port 443 by default. If another component in the system has occupied port 443, the openelb-manager Pod will be stuck in pending state.&lt;/p&gt;
 &lt;h2 id=&#34;solution&#34;&gt;Solution&lt;/h2&gt;
-&lt;p&gt;Perform the following steps to change port 443 of PorterLB. The namespace in the commands is only an example.&lt;/p&gt;
+&lt;p&gt;Perform the following steps to change port 443 of OpenELB. The namespace in the commands is only an example.&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;
-&lt;p&gt;Run the following command to edit the porter-manager Deployment:&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl edit deployment porter-manager -n porter-system
+&lt;p&gt;Run the following command to edit the openelb-manager Deployment:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl edit deployment openelb-manager -n openelb-system
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;Change port 443 to a different value (for example, 30443) to avoid the port conflict:&lt;/p&gt;
@@ -47,10 +51,13 @@
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;          &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;hostPort&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;443&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# Change the port number.&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;Run the following command to check whether the status of porter-manager is &lt;strong&gt;READY&lt;/strong&gt;: &lt;strong&gt;1/1&lt;/strong&gt; and &lt;strong&gt;STATUS&lt;/strong&gt;: &lt;strong&gt;Running&lt;/strong&gt;. If yes, PorterLB has been installed successfully.&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;kubectl get po -n porter-system
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/images/en/docs/getting-started/faqs/what-do-i-do-if-the-porter-manager-pod-is-stuck-in-pending-state/verify-porter.jpg&#34; alt=&#34;verify-porter&#34;&gt;&lt;/p&gt;
-&lt;/li&gt;
+&lt;p&gt;Run the following command to check whether the status of openelb-manager is &lt;strong&gt;READY&lt;/strong&gt;: &lt;strong&gt;1/1&lt;/strong&gt; and &lt;strong&gt;STATUS&lt;/strong&gt;: &lt;strong&gt;Running&lt;/strong&gt;. If yes, OpenELB has been installed successfully.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;root@node1:~/openelb# kubectl get pod -n openelb-system
+NAME                               READY   STATUS      RESTARTS   AGE
+openelb-admission-create-m2p52     0/1     Completed   &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          7m22s
+openelb-admission-patch-qmvnq      0/1     Completed   &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          7m22s
+openelb-manager-74c5467674-pgtmh   1/1     Running     &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;          30s
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
       </description>
