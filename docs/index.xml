@@ -55,7 +55,7 @@
 &lt;h2 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;You need to prepare a Linux environment.&lt;/li&gt;
-&lt;li&gt;You need to install &lt;a href=&#34;https://github.com/kubesphere/porter/blob/master/doc/how-to-build.md&#34;&gt;Go 1.12 or later&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;You need to install &lt;a href=&#34;https://github.com/openelb/openelb/blob/master/doc/how-to-build.md&#34;&gt;Go 1.12 or later&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;You need to install &lt;a href=&#34;https://www.docker.com/get-started&#34;&gt;Docker&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;You need to install &lt;a href=&#34;https://www.docker.com/blog/getting-started-with-docker-for-arm-on-linux/&#34;&gt;Docker Buildx&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
@@ -854,7 +854,7 @@ openelb-manager-74c5467674-pgtmh   1/1     Running     &lt;span style=&#34;color
 &lt;p&gt;Obtain the &lt;a href=&#34;https://github.com/kubesphere/community/tree/master/developer-guide&#34;&gt;developer guides&lt;/a&gt; at the KubeSphere Community, &lt;a href=&#34;/docs/building-and-contributing/build-the-openelb-project&#34;&gt;build the OpenELB project&lt;/a&gt; locally for testing, and send pull requests to the &lt;a href=&#34;https://github.com/kubesphere/OpenELB&#34;&gt;GitHub OpenELB Repository&lt;/a&gt;.&lt;/p&gt;
 &lt;h2 id=&#34;document-contributions&#34;&gt;Document Contributions&lt;/h2&gt;
 &lt;p&gt;Both original documents and localization works are welcome!&lt;/p&gt;
-&lt;p&gt;Obtain the &lt;a href=&#34;https://github.com/kubesphere/porter-website&#34;&gt;OpenELB Style Guides&lt;/a&gt; in the root directory of the GitHub OpenELB Website Repository. All documents of OpenELB are located in the &lt;a href=&#34;https://github.com/kubesphere/porter-website/tree/master/content&#34;&gt;content&lt;/a&gt; directory.&lt;/p&gt;
+&lt;p&gt;Obtain the &lt;a href=&#34;https://github.com/openelb/openelb-website&#34;&gt;OpenELB Style Guides&lt;/a&gt; in the root directory of the GitHub OpenELB Website Repository. All documents of OpenELB are located in the &lt;a href=&#34;https://github.com/openelb/openelb-website/tree/master/content&#34;&gt;content&lt;/a&gt; directory.&lt;/p&gt;
 
       </description>
     </item>
